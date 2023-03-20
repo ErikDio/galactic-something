@@ -1,2 +1,2 @@
 # galactic-something
-Shoot'em all
+A space shooter game being produced on Python.
