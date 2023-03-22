@@ -13,7 +13,6 @@ clock = pygame.time.Clock()
 Foward = 0
 
 Winsize = (800, 600)
-Centro = None
 _hitbox = False
 
 
@@ -28,16 +27,14 @@ def main():
 def iniciar_game(tela):
 	print(tela.get_size())
 	global clock
-	global Centro
 	global Winsize
 	Winsize = pygame.display.get_surface().get_size()
-
-	Objetos.Asteroides.append(AsteroidHndlr((70, 70), [500, 300], 3))
-	Objetos.Asteroides.append(AsteroidHndlr((70, 70), [400, 200], 3))
-	Objetos.Asteroides.append(AsteroidHndlr((70, 70), [100, 100], 3))
-	Objetos.Asteroides.append(AsteroidHndlr((70, 70), [300, 100], 3))
-	Objetos.Asteroides.append(AsteroidHndlr((70, 70), [600, 100], 3))
-	Objetos.Asteroides.append(AsteroidHndlr((70, 70), [700, 100], 3))
+	Objetos.Asteroides.append(AsteroidHndlr(3, [500, 300]))
+	Objetos.Asteroides.append(AsteroidHndlr(1, [400, 200]))
+	Objetos.Asteroides.append(AsteroidHndlr(3, [100, 100]))
+	Objetos.Asteroides.append(AsteroidHndlr(3, [300, 100]))
+	Objetos.Asteroides.append(AsteroidHndlr(2, [600, 100]))
+	Objetos.Asteroides.append(AsteroidHndlr(1, [700, 100]))
 	Objetos.Player = PlayerHdlr(0, [400, 300])
 
 	while True:		# -------------------------------------- Loop while de atualização
@@ -45,7 +42,7 @@ def iniciar_game(tela):
 			if event.type == pygame.QUIT:
 				pygame.quit()
 				quit()
-		tela.fill(blk)
+		tela.fill(BLK)
 		controles()
 		move()
 		limpar()
@@ -83,20 +80,20 @@ class ScreenManager:
 		obj_transf = pygame.transform.rotate(target.sprite, target.angle)
 		centro = obj_transf.get_rect(center=target.sprite.get_rect(center=tuple(target.pos)).center)
 		target.centro = centro
-		Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0],centro[1]], target))
-		if (centro[1] < 100) or (centro[0] < 100) or (centro[1] > Winsize[1]-100) or centro[0] > Winsize[0]-100:
-			if centro[1] < 100:
-				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0], centro[1] + Winsize[1]], target))
-			elif centro[1] > Winsize[1]-100:
-				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0], centro[1] - Winsize[1]], target))
-			if centro[0] < 100:
-				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0] + Winsize[0], centro[1]], target))
-			elif centro[0] > Winsize[0]-100:
-				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0] - Winsize[0], centro[1]], target))
-			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0] - Winsize[0], centro[1] - Winsize[1]], target))
-			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0] - Winsize[0], centro[1] + Winsize[1]], target))
-			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0] + Winsize[0], centro[1] - Winsize[1]], target))
-			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro[0] + Winsize[0], centro[1] + Winsize[1]], target))
+		Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x,centro.y], target))
+		if (centro.y < 100) or (centro.x < 100) or (centro.y > Winsize[1]-100) or centro.x > Winsize[0]-100:
+			if centro.y < 100:
+				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x, centro.y + Winsize[1]], target))
+			elif centro.y > Winsize[1]-100:
+				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x, centro.y - Winsize[1]], target))
+			if centro.x < 100:
+				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x + Winsize[0], centro.y], target))
+			elif centro.x > Winsize[0]-100:
+				Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x - Winsize[0], centro.y], target))
+			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x - Winsize[0], centro.y - Winsize[1]], target))
+			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x - Winsize[0], centro.y + Winsize[1]], target))
+			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x + Winsize[0], centro.y - Winsize[1]], target))
+			Objetos.temp_sprite.append(TempHndlr(obj_transf, [centro.x + Winsize[0], centro.y + Winsize[1]], target))
 
 	@staticmethod
 	def loop_scr(target):
@@ -113,11 +110,11 @@ class ScreenManager:
 # ------------------------------------------- Limpar sprites
 def limpar():
 	for count, bala in enumerate(Objetos.Bala):
-		if bala.lifetime > bala_vida:
+		if bala.lifetime > B_VIDA:
 			i = randint(4, 7)
 			n = 0
 			while n < i:
-				Objetos.Particula.append(ParticleHdlr(bala.pos))
+				Objetos.Particula.append(ParticleHdlr([bala.pos[0],bala.pos[1]]))
 				n += 1
 			del Objetos.Bala[count]
 		else:
@@ -172,11 +169,11 @@ def move():
 
 # ------------------------------------------- Atira
 def atirar():
-	global delay_bala
+	global B_DELAY
 	cur_time = pygame.time.get_ticks()
-	if cur_time - delay_bala >= 200:
+	if cur_time - B_DELAY >= 200:
 		Objetos.Bala.append(ProjetilHdlr(Objetos.Player.angle, list([Objetos.Player.pos[0] - (30 * x_sin(Objetos.Player.angle)), Objetos.Player.pos[1] - 30 * y_cos(Objetos.Player.angle)]), (4, 4)))
-		delay_bala = cur_time
+		B_DELAY = cur_time
 		#print(len(Objetos.Bala))
 
 
