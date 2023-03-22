@@ -1,2 +1,2 @@
 # galactic-something
-A space shooter game being produced on Python.
+A space shooter being produced on Python.
