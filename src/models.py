@@ -1,13 +1,13 @@
 import pygame
-from constantes import *
+from constants import *
 
 class Modelos:
 	@staticmethod
-	def nave(target, cor=WHT):
+	def player(target, cor=WHT):
 		pygame.draw.polygon(target, cor, [[0, 50], [25, 0], [50, 50], [25, 35]], 2)
 
 	@staticmethod
-	def bala(target):
+	def bullet(target):
 		pygame.draw.circle(target, WHT, (2, 2), 2, 0)
 
 	@staticmethod
