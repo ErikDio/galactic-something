@@ -1,17 +1,31 @@
 from random import randint, uniform
-from modelos import *
+from models import *
 
-class Objetos:
-	Asteroides = []
+class Objects:
+	Asteroids = []
 	Player = None
-	Bala = []
-	Particula = []
+	Bullet = []
+	Particle = []
 	temp_sprite = []
+	Sprites = {}
+	Sprites['asteroid3'] = pygame.Surface((72,72))
+	Sprites['asteroid2'] = pygame.Surface((42,42))
+	Sprites['asteroid1'] = pygame.Surface((22,22))
+	Sprites['player'] = pygame.Surface((50,50))
+	Sprites['bullet'] = pygame.Surface((4,4))
+	for surf in Sprites.values():
+		surf.set_colorkey(BLK)
+	Modelos.asteroid1(Sprites['asteroid1'])
+	Modelos.asteroid2(Sprites['asteroid2'])
+	Modelos.asteroid3(Sprites['asteroid3'])
+	Modelos.player(Sprites['player'])
+	Modelos.bullet(Sprites['bullet'])
+	
 
 # ------------------------------------------- Asteroides
 class AsteroidHndlr:
 	def __init__(self, stage: int, posicao: list):
-		self.name = "asteroide"
+		self.name = "asteroid"
 		self.angle = 0
 		self.center = None
 		self.direction = randint(0, 359)
@@ -19,25 +33,16 @@ class AsteroidHndlr:
 		self.stage = stage
 		self.sprite = pygame.Surface((0,0))
 		self.vel = uniform(0.3, 1)
-		self.hp = 0
+		self.hp = stage
 		self.rot_vel = uniform(-1.0, 1.0)
 		if stage == 3:
-			self.sprite = pygame.Surface((72,72))
-			self.sprite.set_colorkey(BLK)
-			Modelos.asteroid3(self.sprite)
-			self.hp = 3
+			self.sprite = Objects.Sprites['asteroid3'].copy()
 			self.vel *= 0.75
 			self.rot_vel *= 0.75
 		if stage == 2:
-			self.sprite = pygame.Surface((42,42))
-			self.sprite.set_colorkey(BLK)
-			Modelos.asteroid2(self.sprite)
-			self.hp = 2
+			self.sprite = Objects.Sprites['asteroid2']
 		if stage == 1:
-			self.sprite = pygame.Surface((22,22))
-			self.sprite.set_colorkey(BLK)
-			Modelos.asteroid1(self.sprite)
-			self.hp = 1
+			self.sprite = Objects.Sprites['asteroid1']
 			self.vel *= 1.5
 			self.rot_vel *= 1.5
 		self.raio = sum(self.sprite.get_size())/3.5
@@ -45,27 +50,23 @@ class AsteroidHndlr:
 
 # ------------------------------------------- Player
 class PlayerHdlr:
-	def __init__(self, angulo: int, posicao: list):
+	def __init__(self, angle: int, posicao: list):
 		self.name = "player"
-		self.angle = angulo
+		self.center = None
+		self.angle = angle
 		self.pos = posicao
-		self.sprite = pygame.Surface((50, 50))
-		self.sprite.set_colorkey(BLK)
-		Modelos.nave(self.sprite)
+		self.sprite = Objects.Sprites['player'].copy()
 		self.raio = (sum(self.sprite.get_size()))/3.5
 
 
 # ------------------------------------------- Projétil
-class ProjetilHdlr:
-	def __init__(self, angulo: int, posicao: list, tamanho: tuple):
-		self.name = "bala"
-		self.angle = angulo
+class BulletHdlr:
+	def __init__(self, angle: int, posicao: list, tamanho: tuple):
+		self.name = "bullet"
+		self.angle = angle
 		self.pos = posicao
-		self.sprite = pygame.Surface(tamanho)
-		self.sprite.set_colorkey(BLK)
-		self.const_vel = 3
+		self.sprite = Objects.Sprites['bullet']
 		self.lifetime = 0
-		Modelos.bala(self.sprite)
 
 
 # ------------------------------------------- Partículas
@@ -82,7 +83,7 @@ class ParticleHdlr:
 
 # ------------------------------------------- Temp Handler
 class TempHndlr:
-	def __init__(self, spr, posicao: list, obj: Objetos):
+	def __init__(self, spr, posicao: list, obj: Objects):
 		self.pos = posicao
 		self.sprite = spr
 		self.sprite.set_colorkey(BLK)
