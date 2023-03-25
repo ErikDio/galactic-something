@@ -6,9 +6,10 @@ GRE = (75, 75, 75)
 # ------------------------------------------- Projéteis
 B_DELAY = 0
 B_VIDA = 150
+B_VEL = 3
 
 # ------------------------------------------- Player
-vel = 2
-inv_frames = 120
+P_VEL = 2
+P_INV_F = 120
 pdamaged = False
 dmg_cont = 0
