@@ -1,4 +1,4 @@
-# ------------------------------------------- Bibliotecas
+# ------------------------------------------- Lib
 import pygame
 from random import randint
 
@@ -6,36 +6,30 @@ from models import *
 from constants import *
 from objects import *
 from colisions import *
+from spawn import *
 
-# ------------------------------------------- Variávieis globais
-clock = pygame.time.Clock()
 
+# ------------------------------------------- Variables
+Clock = pygame.time.Clock()
 Foward = 0
-
-WINSIZE = (800, 600)
 _hitbox = False
+dt = 0
 
-
-# ------------------------------------------- main()
+# ------------------------------------------- Initialize
 def main():
 	pygame.init()
 	pygame.display.set_caption("Asteroidinho")
-	iniciar_game(pygame.display.set_mode(WINSIZE))
+	start_game(pygame.display.set_mode(WINSIZE))
 
 
-# ------------------------------------------- iniciar_game()
-def iniciar_game(screen):
+# ------------------------------------------- Starts the game
+def start_game(screen):
 	print(screen.get_size())
-	global clock
+	global Clock
 	global WINSIZE
 	global _hitbox
+	global dt
 	WINSIZE = pygame.display.get_surface().get_size()
-	Objects.Asteroids.append(AsteroidHndlr(3, [500, 300]))
-	Objects.Asteroids.append(AsteroidHndlr(1, [400, 200]))
-	Objects.Asteroids.append(AsteroidHndlr(3, [100, 100]))
-	Objects.Asteroids.append(AsteroidHndlr(3, [300, 100]))
-	Objects.Asteroids.append(AsteroidHndlr(2, [600, 100]))
-	Objects.Asteroids.append(AsteroidHndlr(1, [700, 100]))
 	Objects.Player = PlayerHdlr(0, [400, 300])
 
 
@@ -47,11 +41,12 @@ def iniciar_game(screen):
 				quit()
 			if event.type == pygame.KEYUP and event.key == pygame.K_h:
 				_hitbox = False if _hitbox == True else True
-				print(_hitbox)
+		dt = round(Clock.tick(FPS) / 1000.0, 4)
 		screen.fill(BLK)
 		controls()
 		move()
 		clear_scr()
+		spawn_hdlr(dt)
 		ScreenManager.loop_scr(Objects.Player)
 		ScreenManager.sprite_transform(Objects.Player)
 		for bala in Objects.Bullet:
@@ -60,17 +55,16 @@ def iniciar_game(screen):
 			ScreenManager.loop_scr(asteroide)
 			ScreenManager.sprite_transform(asteroide)
 		colision_chk(screen)
+		player_hit(dt)
 		ScreenManager.update(screen)
 		pygame.display.flip()
-		pygame.display.set_caption(f"FPS: {int(clock.get_fps())}, Objetos: {len(Objects.temp_sprite)}")
+		pygame.display.set_caption(f"FPS: {int(Clock.get_fps())}, Objetos: {len(Objects.temp_sprite)}")
 		Objects.temp_sprite.clear()
-		clock.tick(60)
 
-
-# -------------------------------------- Rotates, Draw, and makes the screen "infinite" 
+# -------------------------------------- Screen Manager
 class ScreenManager:
 	@staticmethod
-	def update(target):
+	def update(target): #---------- Draw Sprites
 		for objeto in Objects.Bullet:
 			target.blit(objeto.sprite, objeto.pos)
 		for objeto in Objects.Particle:
@@ -78,61 +72,61 @@ class ScreenManager:
 		for objeto in Objects.temp_sprite:
 			if _hitbox:
 				_rect = objeto.sprite.get_rect()
-				_rect.x = objeto.pos[0]
-				_rect.y = objeto.pos[1]
+				_rect.x,_rect.y = objeto.pos
 				pygame.draw.circle(target, (255,0,0), (_rect.centerx, _rect.centery), objeto.objeto.raio, 1)
 			target.blit(objeto.sprite, objeto.pos)
 
 	@staticmethod
-	def sprite_transform(target):
+	def sprite_transform(target): #---------- Rotate sprites and loop the corners
 		obj_transf = pygame.transform.rotate(target.sprite, target.angle)
 		centro = obj_transf.get_rect(center=target.sprite.get_rect(center=tuple(target.pos)).center)
 		target.center = centro
+		TempHndlr(obj_transf, [centro.x,centro.y], target)
 		_raio = target.raio*2
-		Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x,centro.y], target))
 		if (centro.y < _raio) or (centro.x < _raio) or (centro.y > WINSIZE[1]-_raio) or centro.x > WINSIZE[0]-_raio:
 			if centro.y < _raio:
-				Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x, centro.y + WINSIZE[1]], target))
+				TempHndlr(obj_transf, [centro.x, centro.y + WINSIZE[1]], target)
 			elif centro.y > WINSIZE[1]-_raio:
-				Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x, centro.y - WINSIZE[1]], target))
+				TempHndlr(obj_transf, [centro.x, centro.y - WINSIZE[1]], target)
 			if centro.x < _raio:
-				Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x + WINSIZE[0], centro.y], target))
+				TempHndlr(obj_transf, [centro.x + WINSIZE[0], centro.y], target)
 			elif centro.x > WINSIZE[0]-_raio:
-				Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x - WINSIZE[0], centro.y], target))
-			Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x - WINSIZE[0], centro.y - WINSIZE[1]], target))
-			Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x - WINSIZE[0], centro.y + WINSIZE[1]], target))
-			Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x + WINSIZE[0], centro.y - WINSIZE[1]], target))
-			Objects.temp_sprite.append(TempHndlr(obj_transf, [centro.x + WINSIZE[0], centro.y + WINSIZE[1]], target))
+				TempHndlr(obj_transf, [centro.x - WINSIZE[0], centro.y], target)
+			TempHndlr(obj_transf, [centro.x - WINSIZE[0], centro.y - WINSIZE[1]], target)
+			TempHndlr(obj_transf, [centro.x - WINSIZE[0], centro.y + WINSIZE[1]], target)
+			TempHndlr(obj_transf, [centro.x + WINSIZE[0], centro.y - WINSIZE[1]], target)
+			TempHndlr(obj_transf, [centro.x + WINSIZE[0], centro.y + WINSIZE[1]], target)
 
 	@staticmethod
 	def loop_scr(target):
 		if target.pos[1] <= 0:
-			target.pos[1] = WINSIZE[1] - 1
+			target.pos[1] += WINSIZE[1]
 		elif target.pos[1] >= WINSIZE[1]:
-			target.pos[1] = 1
+			target.pos[1] -= WINSIZE[1]
 		elif target.pos[0] <= 0:
-			target.pos[0] = WINSIZE[0] - 1
+			target.pos[0] += WINSIZE[0]
 		elif target.pos[0] >= WINSIZE[0]:
-			target.pos[0] = 1
+			target.pos[0] -= WINSIZE[0]
 
 
 # ------------------------------------------- Removes bullets
 def clear_scr():
+	global dt
 	for count, bala in enumerate(Objects.Bullet):
 		if bala.lifetime > B_VIDA:
 			i = randint(4, 7)
 			n = 0
 			while n < i:
-				Objects.Particle.append(ParticleHdlr([bala.pos[0],bala.pos[1]]))
+				ParticleHdlr([bala.pos[0],bala.pos[1]])
 				n += 1
 			del Objects.Bullet[count]
 		else:
-			bala.lifetime += 1
+			bala.lifetime += dt
 	for count, particle in enumerate(Objects.Particle):
 		if particle.curlife > particle.lifetime:
 			del Objects.Particle[count]
 		else:
-			particle.curlife += 1
+			particle.curlife += dt
 	Objects.temp_sprite.clear()
 
 # ------------------------------------------- Cálculos
@@ -146,7 +140,7 @@ def y_cos(angle: int):
 
 # ------------------------------------------- Rotação
 def rotate(angle):
-	Objects.Player.angle += angle
+	Objects.Player.angle += angle*dt
 	if Objects.Player.angle < 0:
 		Objects.Player.angle = 359
 	elif Objects.Player.angle == 359:
@@ -155,22 +149,23 @@ def rotate(angle):
 
 # ------------------------------------------- Movimento
 def move():
+	global dt
 	if Foward != 0:
-		Objects.Player.pos[0] -= (P_VEL*Foward)*(x_sin(Objects.Player.angle))
-		Objects.Player.pos[1] -= (P_VEL*Foward)*(y_cos(Objects.Player.angle))
+		Objects.Player.pos[0] -= (P_VEL * Foward) * dt * (x_sin(Objects.Player.angle))
+		Objects.Player.pos[1] -= (P_VEL * Foward) * dt * (y_cos(Objects.Player.angle))
 	if Objects.Bullet:
 		for bala in Objects.Bullet:
-			bala.pos[0] -= B_VEL * (x_sin(bala.angle))
-			bala.pos[1] -= B_VEL * (y_cos(bala.angle))
+			bala.pos[0] -= B_VEL * dt * (x_sin(bala.angle))
+			bala.pos[1] -= B_VEL * dt * (y_cos(bala.angle))
 	if Objects.Particle:
 		for particula in Objects.Particle:
-			particula.pos[0] -= particula.vel * (x_sin(particula.angle))
-			particula.pos[1] -= particula.vel * (y_cos(particula.angle))
+			particula.pos[0] -= particula.vel * dt * (x_sin(particula.angle))
+			particula.pos[1] -= particula.vel * dt * (y_cos(particula.angle))
 	if Objects.Asteroids:
 		for asteroide in Objects.Asteroids:
-			asteroide.pos[0] -= asteroide.vel*(x_sin(asteroide.direction))
-			asteroide.pos[1] -= asteroide.vel*(y_cos(asteroide.direction))
-			asteroide.angle += asteroide.rot_vel
+			asteroide.pos[0] -= asteroide.vel * dt * (x_sin(asteroide.direction))
+			asteroide.pos[1] -= asteroide.vel * dt * (y_cos(asteroide.direction))
+			asteroide.angle += asteroide.rot_vel * dt
 			if asteroide.angle > 359:
 				asteroide.angle -= 359
 
@@ -180,7 +175,7 @@ def shoot():
 	global B_DELAY
 	cur_time = pygame.time.get_ticks()
 	if cur_time - B_DELAY >= 200:
-		Objects.Bullet.append(BulletHdlr(Objects.Player.angle, list([Objects.Player.pos[0] - (30 * x_sin(Objects.Player.angle)), Objects.Player.pos[1] - 30 * y_cos(Objects.Player.angle)]), (4, 4)))
+		BulletHdlr(Objects.Player.angle, list([Objects.Player.pos[0] - (30 * x_sin(Objects.Player.angle)), Objects.Player.pos[1] - 30 * y_cos(Objects.Player.angle)]))
 		B_DELAY = cur_time
 
 
@@ -189,8 +184,8 @@ def controls():
 	global Foward
 	global _hitbox
 	tecla = pygame.key.get_pressed()
-	if tecla[pygame.K_LEFT] or tecla[pygame.K_a]: rotate(+3)
-	if tecla[pygame.K_RIGHT] or tecla[pygame.K_d]: rotate(-3)
+	if tecla[pygame.K_LEFT] or tecla[pygame.K_a]: rotate(180)
+	if tecla[pygame.K_RIGHT] or tecla[pygame.K_d]: rotate(-180)
 	if tecla[pygame.K_SPACE]: shoot()
 	if tecla[pygame.K_UP] or tecla[pygame.K_w]: Foward = 1
 	elif tecla[pygame.K_DOWN] or tecla[pygame.K_s]: Foward = -1
