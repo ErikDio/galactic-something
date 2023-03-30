@@ -3,23 +3,29 @@ from objects import *
 from constants import *
 from models import *
 
-def colision_chk(target):
+pdamaged = False
+dmg_cont = 0
+
+def player_hit(dt):
 	global pdamaged
 	global dmg_cont
 	if pdamaged == True:
-		if dmg_cont < P_INV_F:
-			dmg_cont += 1
-			if dmg_cont%20 == 0:
+		if dmg_cont < P_INV_T:
+			dmg_cont += dt
+			if round(dmg_cont%0.2,1)==0.1:
 				Objects.Player.sprite.set_alpha(100)
-			elif dmg_cont%20 == 10:
+			elif round(dmg_cont%0.2,1)==0.0:
 				Objects.Player.sprite.set_alpha(255)
 		else:
 			dmg_cont = 0
-			Objects.Player.sprite = Objects.Sprites['player'].copy()
+			Objects.Player.sprite.set_alpha(255)
 			pdamaged = False
-	for contador, bala in enumerate(Objects.Bullet):
+
+def colision_chk(target):
+	global pdamaged
+	for bala in Objects.Bullet:
 		for temp in Objects.temp_sprite:
-			if (temp.objeto.name == "asteroid"):
+			if (temp.objeto.name == "asteroid" and temp.objeto.is_tangible == True):
 				_rect = temp.sprite.get_rect()
 				_rect.x = temp.pos[0]
 				_rect.y = temp.pos[1]
@@ -32,7 +38,7 @@ def colision_chk(target):
 	_prect.x = _ptemp.pos[0]
 	_prect.y = _ptemp.pos[1]
 	for temp in Objects.temp_sprite:
-		if (temp.objeto.name == "asteroid"):
+		if (temp.objeto.name == "asteroid" and temp.objeto.is_tangible == True):
 			_rect = temp.sprite.get_rect()
 			_rect.x = temp.pos[0]
 			_rect.y = temp.pos[1]
@@ -45,8 +51,11 @@ def damage_ast(asteroide):
 	if asteroide.hp <= 0:
 		if asteroide.stage > 1:
 			asteroide.stage -= 1
-			Objects.Asteroids.append(AsteroidHndlr(asteroide.stage, [asteroide.pos[0]-25, asteroide.pos[1]-25]))
-			Objects.Asteroids.append(AsteroidHndlr(asteroide.stage, [asteroide.pos[0]+25, asteroide.pos[1]+25]))
-		Objects.Asteroids.remove(asteroide)
+			AsteroidHndlr(asteroide.stage, [asteroide.pos[0]-25, asteroide.pos[1]-25])
+			AsteroidHndlr(asteroide.stage, [asteroide.pos[0]+25, asteroide.pos[1]+25])
+		try:
+			Objects.Asteroids.remove(asteroide)
+		except:
+			print(f"{asteroide} não existe mais???")
 	else:
 		asteroide.hp -= 1
